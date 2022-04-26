@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.nttdata.movement.account.service.FeignClient.AccountFeignClient;
+import com.nttdata.movement.account.service.FeignClient.TableIdFeignClient;
 import com.nttdata.movement.account.service.entity.MovementAccount;
 import com.nttdata.movement.account.service.entity.TypeMovementAccount;
 import com.nttdata.movement.account.service.model.Account;
@@ -39,12 +40,10 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Autowired
 	AccountFeignClient accountFeignClient;
+	
+	@Autowired
+	TableIdFeignClient tableIdFeignClient;
 
-	@Value("${api.account-service.uri}")
-	private String accountService;
-
-	@Value("${api.tableId-service.uri}")
-	String tableIdService;
 
 	@Override
 	public Flux<MovementAccount> findAll() {
@@ -59,9 +58,12 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	@Override
 	public Mono<MovementAccount> save(MovementAccount movementAccount) {
 		Long key = generateKey(MovementAccount.class.getSimpleName());
+		log.info("KEY->> "+key);
 		if (key >= 1) {
 			movementAccount.setIdMovementAccount(key);
-//log.info("SAVE[product]:"+movementAccount.toString());
+			log.info("SAVE [MovementAccount]: "+movementAccount.toString());
+		}else {
+			return Mono.error(new InterruptedException("Servicio no disponible:" + MovementAccount.class.getSimpleName()));			
 		}
 		return repository.insert(movementAccount);
 	}
@@ -160,15 +162,17 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Override
 	public Long generateKey(String nameTable) {
-//log.info(tableIdService + "/generateKey/" + nameTable);
+		/*log.info(tableIdService + "/generateKey/" + nameTable);
 		ResponseEntity<Long> responseGet = restTemplate.exchange(tableIdService + "/generateKey/" + nameTable,
 				HttpMethod.GET, null, new ParameterizedTypeReference<Long>() {
 				});
 		if (responseGet.getStatusCode() == HttpStatus.OK) {
-//log.info("Body:"+ responseGet.getBody());
+			//log.info("Body:"+ responseGet.getBody());
 			return responseGet.getBody();
 		} else {
 			return Long.valueOf(0);
-		}
+		}*/
+		
+		return tableIdFeignClient.generateKey(nameTable);
 	}
 }
