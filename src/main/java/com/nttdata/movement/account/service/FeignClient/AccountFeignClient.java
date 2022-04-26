@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.nttdata.movement.account.service.FeignClient.FallBackImpl.AccountFeignClientFallBack;
 import com.nttdata.movement.account.service.model.Account;
 
-@FeignClient(name = "accountFeignClient", url = "${api.account-service.uri}", fallback = AccountFeignClientFallBack.class)
+@FeignClient(name = "${api.account-service.uri}", fallback = AccountFeignClientFallBack.class)
 public interface AccountFeignClient {
 	
 	@GetMapping("/{id}")
