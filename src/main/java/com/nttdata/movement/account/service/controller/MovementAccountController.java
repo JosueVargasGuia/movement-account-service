@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,12 +32,12 @@ public class MovementAccountController {
 	@Autowired
 	private MovementAccountService service;
 	
-	@GetMapping
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 	public Flux<MovementAccount> getAll(){
 		return service.findAll();
 	}
 	
-	@GetMapping("/{id}")
+	@GetMapping(value="/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<MovementAccount>> getOneMovementAccount(@PathVariable("id") Long id){
 		return service.findById(id).map(_movement -> ResponseEntity.ok().body(_movement))
 				.onErrorResume(e -> {
@@ -45,7 +46,7 @@ public class MovementAccountController {
 				}).defaultIfEmpty(ResponseEntity.noContent().build());
 	}
 
-	@PostMapping
+	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<MovementAccount>> saveMovementAccount(@RequestBody MovementAccount movementAccount){
 		return service.save(movementAccount).map(_movement -> ResponseEntity.ok().body(_movement)).onErrorResume(e -> {
 			log.info("Error:" + e.getMessage());
@@ -53,7 +54,7 @@ public class MovementAccountController {
 		});
 	}
 	
-	@PutMapping
+	@PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<MovementAccount>> updateMovementAccount(@RequestBody MovementAccount movementAccount){
 		Mono<MovementAccount> objMovementAccount = service.findById(movementAccount.getIdMovementAccount()).flatMap(_movement -> {
 			log.info("Update: [new] " + movementAccount + "\n[Old]: " + _movement);
@@ -76,7 +77,7 @@ public class MovementAccountController {
 		});
 	}
 	
-	@PostMapping("/recordAccount")
+	@PostMapping(value= "/recordAccount")
 	public Mono<ResponseEntity<Map<String, Object>>> recordAccount(@RequestBody MovementAccount movementAccount) {
 		return service.recordsMovement(movementAccount).map(obj -> ResponseEntity.ok().body(obj))
 				.onErrorResume(e -> {
@@ -87,7 +88,7 @@ public class MovementAccountController {
 				}).defaultIfEmpty(ResponseEntity.noContent().build());
 	}
 	
-	@PostMapping("/balanceInquiry")
+	@PostMapping(value= "/balanceInquiry", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Mono<ResponseEntity<Map<String, Object>>> balanceInquiry(@RequestBody  Account account) {
 		return service.balanceInquiry(account).map(act -> ResponseEntity.ok().body(act))
 				.onErrorResume(e -> {
