@@ -1,6 +1,12 @@
 package com.nttdata.movement.account.service.model;
 
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+ 
+
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,16 +14,16 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-public class Account {
-	
+@AllArgsConstructor 
+@Data 
+public abstract class Account {	 
 	private Long idAccount;
-	private Long idProduct;
 	private Long idCustomer;
-	//private Double amount;
-	@Override
-	public String toString() {
-		return "Account [idAccount=" + idAccount + ", idProduct=" + idProduct + ", idCustomer=" + idCustomer + "]";
-	}
- 
+	private typeOfCurrency typeOfCurrency;
+	private String accountNumber;	
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss") 
+	private Date creationDate;
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
+	private Date dateModified;
 }
+//https://www.baeldung.com/jackson-jsonformat

@@ -21,6 +21,7 @@ import com.nttdata.movement.account.service.FeignClient.TableIdFeignClient;
 import com.nttdata.movement.account.service.entity.MovementAccount;
 import com.nttdata.movement.account.service.entity.TypeMovementAccount;
 import com.nttdata.movement.account.service.model.Account;
+import com.nttdata.movement.account.service.model.BankAccounts;
 import com.nttdata.movement.account.service.repository.MovementAccountRepository;
 import com.nttdata.movement.account.service.service.MovementAccountService;
 
@@ -51,8 +52,8 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	}
 
 	@Override
-	public Mono<MovementAccount> findById(Long id) {
-		return repository.findById(id);
+	public Mono<MovementAccount> findById(Long idMovementAccount) {
+		return repository.findById(idMovementAccount);
 	}
 
 	@Override
@@ -61,6 +62,7 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 		log.info("KEY->> "+key);
 		if (key >= 1) {
 			movementAccount.setIdMovementAccount(key);
+			movementAccount.setCreationDate(Calendar.getInstance().getTime());
 			log.info("SAVE [MovementAccount]: "+movementAccount.toString());
 		}else {
 			return Mono.error(new InterruptedException("Servicio no disponible:" + MovementAccount.class.getSimpleName()));			
@@ -74,8 +76,8 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	}
 
 	@Override
-	public Mono<Void> delete(Long id) {
-		return repository.deleteById(id);
+	public Mono<Void> delete(Long idMovementAccount) {
+		return repository.deleteById(idMovementAccount);
 	}
 
 	@Override
@@ -83,10 +85,10 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 // metodo para registrar los movimientos de la cuenta
 
 		Map<String, Object> hashMap = new HashMap<String, Object>();
-		Account account = this.findByIdAccount(movementAccount.getIdAccount());
+		Account account = this.findByIdAccount(movementAccount.getIdBankAccount());
 		if (account != null) {
 			if (movementAccount.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
-				return this.findAll().filter(c -> (c.getIdAccount() == movementAccount.getIdAccount())).map(mov -> {
+				return this.findAll().filter(c -> (c.getIdBankAccount() == movementAccount.getIdBankAccount())).map(mov -> {
 					log.info("Amount:" + mov.getAmount());
 					if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
 						mov.setAmount(-1 * mov.getAmount());
@@ -127,20 +129,20 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	}
 
 	@Override
-	public Account findByIdAccount(Long idAccount) {
+	public BankAccounts findByIdAccount(Long idBankAccount) {
 // buscar la cuenta donde se realizan los movimientos
-		Account account = accountFeignClient.accountFindById(idAccount);
-		log.info("Account -> " + account);
-		return account;
+		BankAccounts accountBankAccounts = accountFeignClient.accountFindById(idBankAccount);
+		log.info("Account -> " + accountBankAccounts);
+		return accountBankAccounts;
 	}
 
 	@Override
-	public Mono<Map<String, Object>> balanceInquiry(Account account) {
+	public Mono<Map<String, Object>> balanceInquiry(BankAccounts bankAccounts) {
 // metodo para la consulta de saldo en la cuenta
 		Map<String, Object> hashMap = new HashMap<String, Object>();
-		Account _account = this.findByIdAccount(account.getIdAccount());
+		Account _account = this.findByIdAccount(bankAccounts.getIdBankAccount());
 		if (_account != null) { // act obj MovementAccount
-			return this.findAll().filter(act -> (act.getIdAccount() == _account.getIdAccount())).map(mov -> {
+			return this.findAll().filter(act -> (act.getIdBankAccount() == _account.getIdAccount())).map(mov -> {
 				if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
 					mov.setAmount(-1 * mov.getAmount());
 				}
@@ -151,7 +153,7 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 			}).map(value -> {
 				hashMap.put("Status Consulta de saldo:", "El saldo de la cuenta es de:" + value);
 //hashMap.put("creditBalance", value);
-				log.info("Account", account);
+				log.info("Account", bankAccounts);
 				return hashMap;
 			});
 		} else {
