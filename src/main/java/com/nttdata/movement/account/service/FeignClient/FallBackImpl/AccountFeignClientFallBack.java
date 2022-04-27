@@ -3,8 +3,8 @@ package com.nttdata.movement.account.service.FeignClient.FallBackImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.nttdata.movement.account.service.FeignClient.AccountFeignClient;
-import com.nttdata.movement.account.service.model.Account;
+import com.nttdata.movement.account.service.FeignClient.AccountFeignClient; 
+import com.nttdata.movement.account.service.model.BankAccounts;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -16,7 +16,7 @@ public class AccountFeignClientFallBack implements AccountFeignClient{
 	private String accountService;
 	
 	@Override
-	public Account accountFindById(Long id) {
+	public BankAccounts accountFindById(Long id) {
 		log.info("AccountFeignClientFallBack -> " + accountService);
 		return null;
 	}
