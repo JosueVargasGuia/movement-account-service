@@ -4,17 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class TableId {
+	
 	private String nameTable;
 	private Long secuencia;
-	@Override
-	public String toString() {
-		return "TableId [nameTable=" + nameTable + ", secuencia=" + secuencia + "]";
-	}
 	
 }
