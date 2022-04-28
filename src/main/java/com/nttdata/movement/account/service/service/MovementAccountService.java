@@ -3,7 +3,6 @@ package com.nttdata.movement.account.service.service;
 import java.util.Map;
 
 import com.nttdata.movement.account.service.entity.MovementAccount;
-import com.nttdata.movement.account.service.model.Account;
 import com.nttdata.movement.account.service.model.BankAccounts;
 
 import reactor.core.publisher.Flux;
@@ -28,4 +27,6 @@ public interface MovementAccountService {
 	Mono<Map<String, Object>> balanceInquiry(BankAccounts bankAccounts);
 
 	Long generateKey(String nameTable);
+	
+	
 }

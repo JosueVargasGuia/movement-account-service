@@ -1,5 +1,5 @@
 package com.nttdata.movement.account.service.model;
 
-public enum typeOfCurrency {
+public enum TypeOfCurrency {
 	dollar,soles,euro;
 }
