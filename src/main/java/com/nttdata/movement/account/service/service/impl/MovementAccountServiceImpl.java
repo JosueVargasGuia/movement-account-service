@@ -5,14 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -41,10 +34,9 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Autowired
 	AccountFeignClient accountFeignClient;
-	
+
 	@Autowired
 	TableIdFeignClient tableIdFeignClient;
-
 
 	@Override
 	public Flux<MovementAccount> findAll() {
@@ -59,13 +51,14 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	@Override
 	public Mono<MovementAccount> save(MovementAccount movementAccount) {
 		Long key = generateKey(MovementAccount.class.getSimpleName());
-		log.info("KEY->> "+key);
+		log.info("KEY->> " + key);
 		if (key >= 1) {
 			movementAccount.setIdMovementAccount(key);
 			movementAccount.setCreationDate(Calendar.getInstance().getTime());
-			log.info("SAVE [MovementAccount]: "+movementAccount.toString());
-		}else {
-			return Mono.error(new InterruptedException("Servicio no disponible:" + MovementAccount.class.getSimpleName()));			
+			log.info("SAVE [MovementAccount]: " + movementAccount.toString());
+		} else {
+			return Mono
+					.error(new InterruptedException("Servicio no disponible:" + MovementAccount.class.getSimpleName()));
 		}
 		return repository.insert(movementAccount);
 	}
@@ -82,41 +75,38 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Override
 	public Mono<Map<String, Object>> recordsMovement(MovementAccount movementAccount) {
-// metodo para registrar los movimientos de la cuenta
+		// metodo para registrar los movimientos de la cuenta
 
 		Map<String, Object> hashMap = new HashMap<String, Object>();
-		Account account = this.findByIdAccount(movementAccount.getIdBankAccount());
+		BankAccounts account = this.findByIdAccount(movementAccount.getIdBankAccount());
 		if (account != null) {
 			if (movementAccount.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
-				return this.findAll().filter(c -> (c.getIdBankAccount() == movementAccount.getIdBankAccount())).map(mov -> {
-					log.info("Amount:" + mov.getAmount());
-					if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
-						mov.setAmount(-1 * mov.getAmount());
-					}
-					return mov;
-				}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_saldo -> {
-					if (movementAccount.getAmount() <= (_saldo /* +account.getAmount() */)) {
-						movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
-						this.save(movementAccount)
-								.subscribe(e -> log.info("Movimiento de retiro registrado: " + e.toString()));
-						hashMap.put("Account success: ",
-								"Registro de movimiento de retiro. Valor retirado: " + movementAccount.getAmount());
-						log.info("Saldo disponible: " + (_saldo - movementAccount.getAmount()));
-					} else {
-						hashMap.put("Message Account", "No cuenta con saldo suficiente para retiro. Saldo disponible: "
-								+ (_saldo /* +account.getAmount() */));
-						log.info("No cuenta con saldo suficiente para retiro." + " Saldo disponible: "
-								+ (_saldo /* +account.getAmount() */));
-					}
-					return hashMap;
-				});
+				return this.findAll().filter(c -> (c.getIdBankAccount() == movementAccount.getIdBankAccount()))
+						.map(mov -> {
+							log.info("Amount:" + mov.getAmount());
+							if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
+								mov.setAmount(-1 * mov.getAmount());
+							}
+							return mov;
+						}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_saldo -> {
+							if (movementAccount.getAmount() <= (_saldo)) {
+								movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
+								this.save(movementAccount)
+										.subscribe(e -> log.info("Movimiento de retiro registrado: " + e.toString()));
+								hashMap.put("Account success: ", "Registro de movimiento de retiro. Valor retirado: "+ movementAccount.getAmount());
+								log.info("Saldo disponible: " + (_saldo - movementAccount.getAmount()));
+							} else {
+								hashMap.put("Message Account", "No cuenta con saldo suficiente para retiro. Saldo disponible: "+ (_saldo));
+								log.info("No cuenta con saldo suficiente para retiro." + " Saldo disponible: "+ (_saldo));
+							}
+							return hashMap;
+						});
 			} else {
 				movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
 				return this.save(movementAccount).map(_value -> {
-					hashMap.put("Account success: ",
-							"Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
+					hashMap.put("Account success: ","Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
 					log.info("Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
-//log.info("Saldo disponible: " + (_value.getAmount()));
+
 					return hashMap;
 				});
 
@@ -130,7 +120,7 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Override
 	public BankAccounts findByIdAccount(Long idBankAccount) {
-// buscar la cuenta donde se realizan los movimientos
+		// buscar la cuenta donde se realizan los movimientos
 		BankAccounts accountBankAccounts = accountFeignClient.accountFindById(idBankAccount);
 		log.info("Account -> " + accountBankAccounts);
 		return accountBankAccounts;
@@ -138,16 +128,18 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Override
 	public Mono<Map<String, Object>> balanceInquiry(BankAccounts bankAccounts) {
-// metodo para la consulta de saldo en la cuenta
+		// metodo para la consulta de saldo en la cuenta
 		Map<String, Object> hashMap = new HashMap<String, Object>();
-		Account _account = this.findByIdAccount(bankAccounts.getIdBankAccount());
+	
+		BankAccounts _account = this.findByIdAccount(bankAccounts.getIdBankAccount());
+		//log.info("Account encontrada: "+ _account.toString());
 		if (_account != null) { // act obj MovementAccount
-			return this.findAll().filter(act -> (act.getIdBankAccount() == _account.getIdAccount())).map(mov -> {
+			return this.findAll().filter(act -> (act.getIdBankAccount() == _account.getIdBankAccount())).map(mov -> {
 				if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
 					mov.setAmount(-1 * mov.getAmount());
 				}
 				return mov;
-			}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_value -> {
+			}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_value -> {				
 				log.info("Consulta de saldo: " + _value);
 				return _value;
 			}).map(value -> {
@@ -164,17 +156,15 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Override
 	public Long generateKey(String nameTable) {
-		/*log.info(tableIdService + "/generateKey/" + nameTable);
-		ResponseEntity<Long> responseGet = restTemplate.exchange(tableIdService + "/generateKey/" + nameTable,
-				HttpMethod.GET, null, new ParameterizedTypeReference<Long>() {
-				});
-		if (responseGet.getStatusCode() == HttpStatus.OK) {
-			//log.info("Body:"+ responseGet.getBody());
-			return responseGet.getBody();
-		} else {
-			return Long.valueOf(0);
-		}*/
-		
+		/*
+		 * log.info(tableIdService + "/generateKey/" + nameTable); ResponseEntity<Long>
+		 * responseGet = restTemplate.exchange(tableIdService + "/generateKey/" +
+		 * nameTable, HttpMethod.GET, null, new ParameterizedTypeReference<Long>() { });
+		 * if (responseGet.getStatusCode() == HttpStatus.OK) { //log.info("Body:"+
+		 * responseGet.getBody()); return responseGet.getBody(); } else { return
+		 * Long.valueOf(0); }
+		 */
+
 		return tableIdFeignClient.generateKey(nameTable);
 	}
 }
