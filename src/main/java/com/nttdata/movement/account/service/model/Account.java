@@ -19,7 +19,7 @@ import lombok.Setter;
 public abstract class Account {	 
 	private Long idAccount;
 	private Long idCustomer;
-	private TypeOfCurrency typeOfCurrency;
+	private typeOfCurrency typeOfCurrency;
 	private String accountNumber;	
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss") 
 	private Date creationDate;
