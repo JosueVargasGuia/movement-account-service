@@ -13,7 +13,6 @@ import com.nttdata.movement.account.service.FeignClient.AccountFeignClient;
 import com.nttdata.movement.account.service.FeignClient.TableIdFeignClient;
 import com.nttdata.movement.account.service.entity.MovementAccount;
 import com.nttdata.movement.account.service.entity.TypeMovementAccount;
-import com.nttdata.movement.account.service.model.Account;
 import com.nttdata.movement.account.service.model.BankAccounts;
 import com.nttdata.movement.account.service.repository.MovementAccountRepository;
 import com.nttdata.movement.account.service.service.MovementAccountService;
