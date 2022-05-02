@@ -92,10 +92,10 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 								movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
 								this.save(movementAccount)
 										.subscribe(e -> log.info("Movimiento de retiro registrado: " + e.toString()));
-								hashMap.put("Account success: ", "Registro de movimiento de retiro. Valor retirado: "+ movementAccount.getAmount());
+								hashMap.put("Account_Success: ", "Registro de movimiento de retiro. Valor retirado: "+ movementAccount.getAmount());
 								log.info("Saldo disponible: " + (_saldo - movementAccount.getAmount()));
 							} else {
-								hashMap.put("Message Account", "No cuenta con saldo suficiente para retiro. Saldo disponible: "+ (_saldo));
+								hashMap.put("Message_Account", "No cuenta con saldo suficiente para retiro. Saldo disponible: "+ (_saldo));
 								log.info("No cuenta con saldo suficiente para retiro." + " Saldo disponible: "+ (_saldo));
 							}
 							return hashMap;
@@ -103,7 +103,7 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 			} else {
 				movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
 				return this.save(movementAccount).map(_value -> {
-					hashMap.put("Account success: ","Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
+					hashMap.put("Movement_Account_Success: ","Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
 					log.info("Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
 
 					return hashMap;
