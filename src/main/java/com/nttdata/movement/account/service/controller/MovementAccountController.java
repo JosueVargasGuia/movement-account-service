@@ -72,10 +72,17 @@ public class MovementAccountController {
 	}
 
 	@DeleteMapping("/{idMovementAccount}")
-	public Mono<ResponseEntity<Void>> deleteMovementAccount(@PathVariable("idMovementAccount") Long idMovementAccount) {
-		return service.findById(idMovementAccount).flatMap(_movement -> {
-			return service.delete(_movement.getIdMovementAccount()).then(Mono.just(ResponseEntity.ok().build()));
-		});
+	public Mono<ResponseEntity<Void>>   deleteMovementAccount(@PathVariable("idMovementAccount") Long idMovementAccount) {
+		/*return service.findById(idMovementAccount).map(movementAccount -> {
+			service.delete(movementAccount.getIdMovementAccount());
+			return ResponseEntity.ok().body(movementAccount);
+		}).onErrorResume(e -> {
+			log.info("Status:" + HttpStatus.BAD_REQUEST + " menssage" + e.getMessage());
+			return Mono.just(ResponseEntity.badRequest().build());
+		}).defaultIfEmpty(ResponseEntity.noContent().build());*/
+		 return service.findById(idMovementAccount).flatMap(_movement -> {
+				return service.delete(_movement.getIdMovementAccount()).then(Mono.just(ResponseEntity.ok().build()));
+			});
 	}
 
 	@PostMapping(value = "/recordAccount")

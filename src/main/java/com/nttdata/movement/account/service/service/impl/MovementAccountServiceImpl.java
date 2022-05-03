@@ -1,6 +1,7 @@
 package com.nttdata.movement.account.service.service.impl;
 
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,16 +50,33 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 
 	@Override
 	public Mono<MovementAccount> save(MovementAccount movementAccount) {
-		Long key = generateKey(MovementAccount.class.getSimpleName());
-		log.info("KEY->> " + key);
-		if (key >= 1) {
-			movementAccount.setIdMovementAccount(key);
-			movementAccount.setCreationDate(Calendar.getInstance().getTime());
-			log.info("SAVE [MovementAccount]: " + movementAccount.toString());
+		// Long key = generateKey(MovementAccount.class.getSimpleName());
+		// log.info("KEY->> " + key);
+		Long count = this.findAll().collect(Collectors.counting()).blockOptional().get();
+		Long idMovementCredit;
+		if (count != null) {
+			if (count <= 0) {
+				idMovementCredit = Long.valueOf(0);
+			} else {
+				idMovementCredit = this.findAll()
+						.collect(Collectors.maxBy(Comparator.comparing(MovementAccount::getIdMovementAccount)))
+						.blockOptional().get().get().getIdMovementAccount();
+			}
 		} else {
-			return Mono
-					.error(new InterruptedException("Servicio no disponible:" + MovementAccount.class.getSimpleName()));
+			idMovementCredit = Long.valueOf(0);
 		}
+
+		movementAccount.setIdMovementAccount(idMovementCredit + 1);
+		movementAccount.setCreationDate(Calendar.getInstance().getTime());
+		log.info("SAVE [MovementAccount]: " + movementAccount.toString());
+		// if (key >= 1) {
+
+		// } else {
+		// return Mono
+		// .error(new InterruptedException("Servicio no disponible:" +
+		// MovementAccount.class.getSimpleName()));
+		// }
+
 		return repository.insert(movementAccount);
 	}
 
@@ -75,43 +93,68 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	@Override
 	public Mono<Map<String, Object>> recordsMovement(MovementAccount movementAccount) {
 		// metodo para registrar los movimientos de la cuenta
-
+		log.info("recordsMovement[MovementAccount]:"+movementAccount);
 		Map<String, Object> hashMap = new HashMap<String, Object>();
 		BankAccounts account = this.findByIdAccount(movementAccount.getIdBankAccount());
 		if (account != null) {
 			if (movementAccount.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
-				return this.findAll().filter(c -> (c.getIdBankAccount() == movementAccount.getIdBankAccount()))
+				
+				Double _saldo= this.findAll().filter(c -> (c.getIdBankAccount() == movementAccount.getIdBankAccount()))
 						.map(mov -> {
-							log.info("Amount:" + mov.getAmount());
+							//log.info("Amount:" + mov.getAmount());
 							if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
 								mov.setAmount(-1 * mov.getAmount());
 							}
 							return mov;
-						}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_saldo -> {
+						})
+						.collect(Collectors.summingDouble(MovementAccount::getAmount))
+						 .blockOptional().get();
+						log.info("Saldo[recordsMovement]:"+_saldo);
+						//.collect(Collectors.summingDouble(MovementAccount::getAmount))
+						
+						//.map(_saldo -> {
 							if (movementAccount.getAmount() <= (_saldo)) {
 								movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
-								this.save(movementAccount)
-										.subscribe(e -> log.info("Movimiento de retiro registrado: " + e.toString()));
-								hashMap.put("Account_Success: ", "Registro de movimiento de retiro. Valor retirado: "+ movementAccount.getAmount());
+								//Mono<MovementAccount> tmp = this.save(movementAccount);
+								//tmp.subscribe();
+
+								MovementAccount ObjMovementAccount = this.save(movementAccount).blockOptional().get();
+								// .subscribe(e -> log.info("Movimiento de retiro registrado: " +
+								// e.toString()));
+								hashMap.put("AccountSuccess: ", "Registro de movimiento de retiro. Valor retirado: "
+										+ movementAccount.getAmount());
+								hashMap.put("status", "success");
+								hashMap.put("MovementAccount", ObjMovementAccount);
+								hashMap.put("idMovementAccount", ObjMovementAccount.getIdMovementAccount());
 								log.info("Saldo disponible: " + (_saldo - movementAccount.getAmount()));
+								return Mono.just(hashMap);
 							} else {
-								hashMap.put("Message_Account", "No cuenta con saldo suficiente para retiro. Saldo disponible: "+ (_saldo));
-								log.info("No cuenta con saldo suficiente para retiro." + " Saldo disponible: "+ (_saldo));
+								hashMap.put("status", "error");
+								hashMap.put("MessageAccount",
+										"No cuenta con saldo suficiente para retiro. Saldo disponible: " + (_saldo));
+								log.info("No cuenta con saldo suficiente para retiro." + " Saldo disponible: "
+										+ (_saldo));
+								return Mono.just(hashMap);
 							}
-							return hashMap;
-						});
+							
+						//});*/
+				 //return null;
 			} else {
 				movementAccount.setDateMovementAccount(Calendar.getInstance().getTime());
 				return this.save(movementAccount).map(_value -> {
-					hashMap.put("Movement_Account_Success: ","Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
+					hashMap.put("AccountSuccess: ",
+							"Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
 					log.info("Registro de movimiento de depósito. Valor depositado: " + _value.getAmount());
-
+					hashMap.put("status", "success");
+					hashMap.put("idMovementAccount", _value.getIdMovementAccount());
+					hashMap.put("MovementAccount", _value);
 					return hashMap;
 				});
 
 			}
 		} else {
-			hashMap.put("Message: ", "Error. Cuenta no existe.");
+			hashMap.put("MessageAccount", "Error. Cuenta no existe.");
+			hashMap.put("status", "error");
 			return Mono.just(hashMap);
 		}
 
@@ -129,16 +172,16 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 	public Mono<Map<String, Object>> balanceInquiry(BankAccounts bankAccounts) {
 		// metodo para la consulta de saldo en la cuenta
 		Map<String, Object> hashMap = new HashMap<String, Object>();
-	
+
 		BankAccounts _account = this.findByIdAccount(bankAccounts.getIdBankAccount());
-		//log.info("Account encontrada: "+ _account.toString());
+		// log.info("Account encontrada: "+ _account.toString());
 		if (_account != null) { // act obj MovementAccount
 			return this.findAll().filter(act -> (act.getIdBankAccount() == _account.getIdBankAccount())).map(mov -> {
 				if (mov.getTypeMovementAccount() == TypeMovementAccount.withdrawal) {
 					mov.setAmount(-1 * mov.getAmount());
 				}
 				return mov;
-			}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_value -> {				
+			}).collect(Collectors.summingDouble(MovementAccount::getAmount)).map(_value -> {
 				log.info("Consulta de saldo: " + _value);
 				return _value;
 			}).map(value -> {
