@@ -185,13 +185,17 @@ public class MovementAccountServiceImpl implements MovementAccountService {
 				log.info("Consulta de saldo: " + _value);
 				return _value;
 			}).map(value -> {
-				hashMap.put("Status Consulta de saldo:", "El saldo de la cuenta es de:" + value);
+				hashMap.put("StatusBalance", "El saldo de la cuenta es de:" + value);
+				hashMap.put("accountBalance", value);
+				hashMap.put("Account", _account);
+				hashMap.put("status", "success");
 //hashMap.put("creditBalance", value);
 				log.info("Account", bankAccounts);
 				return hashMap;
 			});
 		} else {
-			hashMap.put("Message account", "Cuenta no existe.");
+			hashMap.put("status", "error");
+			hashMap.put("Account", "Cuenta corriente no existe.");
 			return Mono.just(hashMap);
 		}
 	}
