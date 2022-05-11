@@ -2,6 +2,7 @@
 /target/*
 /.settings/*
 /.classpath
+/log
 .factorypath
 .project
 .gitignore.bak
