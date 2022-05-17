@@ -2,8 +2,8 @@ spring:
   application:
     name: movement-account-service
   cloud:
-    config:
-      uri: http://localhost:8081
+    config:      
       enabled: true
+      uri: http://localhost:8081
         
  
